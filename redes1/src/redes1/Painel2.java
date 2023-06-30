@@ -11,7 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
+import org.json.simple.parser.JSONParser;
 
 public class Painel2 extends javax.swing.JPanel {
 
@@ -19,6 +19,7 @@ public class Painel2 extends javax.swing.JPanel {
     DefaultListModel<String> chat = new DefaultListModel<>();
     
     String mensagem;
+    // endereço IP do grupo multicast
     InetAddress group;
     MulticastSocket socket;
     
@@ -33,6 +34,7 @@ public class Painel2 extends javax.swing.JPanel {
     }
     
     public void ligatThreadRecebimento() {
+        Janela.recebedor = new receberMensagem(socket);
         thread1 = new Thread(Janela.recebedor);
         thread1.start();
     }
@@ -71,16 +73,24 @@ public class Painel2 extends javax.swing.JPanel {
     }
     
     public String converterFormato(String messagemFormatada) {
-        String mensagemConvertida = "vazio";
-        //messagemFormatada.indexOf("username")
-        String usuario = messagemFormatada.substring((messagemFormatada.indexOf("username") + 11), (messagemFormatada.indexOf("}") - 1));
-        String mensagem = messagemFormatada.substring((messagemFormatada.indexOf("message") + 10), (messagemFormatada.indexOf("username") - 3));
-        String hora = messagemFormatada.substring((messagemFormatada.indexOf("time") + 7), (messagemFormatada.indexOf("message") - 3));
+        String mensagemConvertida = "";
         
-        mensagemConvertida = hora.concat(" ~ ");
-        mensagemConvertida = mensagemConvertida.concat(usuario);
-        mensagemConvertida = mensagemConvertida.concat(": ");
-        mensagemConvertida = mensagemConvertida.concat(mensagem);
+        JSONParser parser = new JSONParser();
+        
+        try {
+            JSONObject mensagemJson = (JSONObject) parser.parse(messagemFormatada);
+            String usuario = mensagemJson.get("username").toString();
+            String mensagem = mensagemJson.get("message").toString();
+            String hora = mensagemJson.get("time").toString();
+            
+            mensagemConvertida = hora.concat(" ~ ");
+            mensagemConvertida = mensagemConvertida.concat(usuario);
+            mensagemConvertida = mensagemConvertida.concat(": ");
+            mensagemConvertida = mensagemConvertida.concat(mensagem);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         
         return mensagemConvertida;
     }
@@ -90,14 +100,13 @@ public class Painel2 extends javax.swing.JPanel {
         // Converta a string JSON em um array de bytes
         byte[] jsonBytes = messagemFormatada.getBytes(StandardCharsets.UTF_8);
         
-        // faz o envio da mensagem no grupo multicast
+        // prepara o pacote para envio com o array de bytes
         DatagramPacket pacoteEnvio = new DatagramPacket(jsonBytes, jsonBytes.length, group, Janela.porta);
         
-        // envia o pacote para o group
+        // envia o pacot
         this.socket.send(pacoteEnvio);
         
         // tranforma o texto em formato de chat
-        System.out.println("mensagem: "+messagemFormatada);
         String mensagemConvertida = converterFormato(messagemFormatada);
         
         chat.addElement(mensagemConvertida);
@@ -121,19 +130,20 @@ public class Painel2 extends javax.swing.JPanel {
         jsonMessage.put("message", mensagem);
         
         String mensagemEmJson = jsonMessage.toJSONString();
-        System.out.println("formato do JSON");
-        System.out.println(mensagemEmJson);
         
         return mensagemEmJson;
     }
     
     public void entrarGrupoMulticast() {
         try {
+            // instancia o socket com a porta que será utilizada
             socket = new MulticastSocket(Janela.porta);
             
+            // inicia o group com o IP
             group = InetAddress.getByName(Janela.ip);
+            
+            // da join no grupo multicast com o group
             this.socket.joinGroup(group);
-            System.out.println("Joined multicast group");
         } 
         catch (Exception e) {
             e.printStackTrace();

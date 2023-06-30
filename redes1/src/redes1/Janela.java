@@ -9,11 +9,8 @@ public class Janela extends javax.swing.JFrame {
     static public String ip;
     static public int porta;
     
-    // instancia uma thread para ligar a classe que recebe as mensagens
-    static Thread thread1;
-    
     // instancia a classe que recebe a mensagem
-    static receberMensagem recebedor = new receberMensagem();
+    static receberMensagem recebedor;
     
     // painel de input de dados (porta, usuario e ip)
     static Painel1 p1;

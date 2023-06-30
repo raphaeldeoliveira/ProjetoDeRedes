@@ -11,10 +11,8 @@ import java.net.InetAddress;
 import java.nio.charset.StandardCharsets;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
 
 public class Painel1 extends javax.swing.JPanel {
@@ -40,7 +38,6 @@ public class Painel1 extends javax.swing.JPanel {
         JSONObject convertido = new JSONObject();
         convertido.put("command", comando);
         convertido.put("locate", argumento);
-        System.out.println("JSON1: "+convertido);
         
         return convertido;
     }
@@ -50,22 +47,8 @@ public class Painel1 extends javax.swing.JPanel {
         convertido.put("command", comando);
         convertido.put("locate", argumento);
         convertido.put("value", digital);
-        System.out.println("JSON2: "+convertido);
         
         return convertido;
-    }
-    
-    public void verificarStatus(String rxMsg) {
-        String local = rxMsg.substring((rxMsg.indexOf("{") + 11), (rxMsg.indexOf(",") - 1));
-        jLabel6.setText(local);
-        String status = rxMsg.substring((rxMsg.indexOf("}") - 3), (rxMsg.indexOf("}") - 1));
-        
-        if (status.equals("ff")) {
-            jLabel8.setText("OFF");
-        }
-        if (status.equals("on")) {
-            jLabel8.setText("ON");
-        }
     }
     
     public void enviar2(String comando, String argumento, String digital) {
@@ -97,9 +80,6 @@ public class Painel1 extends javax.swing.JPanel {
                 // passa para string
                 String txMsg = mensagemJson.toString();
                 
-                // coloca a mensagem de envio no painel
-                jTextField2.setText(txMsg);
-            
             // Converte a mensagem em um array de byte
             txData = txMsg.getBytes(StandardCharsets.UTF_8);
             
@@ -107,7 +87,6 @@ public class Painel1 extends javax.swing.JPanel {
             DatagramPacket txPkt = new DatagramPacket(txData, txMsg.length(), srvIPAddr, Janela.porta);
             
             // Envia a mensagem
-            System.out.println("Enviando a mensagem para o servidor!");
             clientSock.send(txPkt);
             
             // Aguardar a resposta do servidor
@@ -116,10 +95,7 @@ public class Painel1 extends javax.swing.JPanel {
                     rxData, rxData.length);
             
             // Aguarda a resposta do servidor
-            System.out.println("Aguardando a resposta do servidor!");
             clientSock.receive(rxPkt);
-            
-            // parei aqui
             
             // Processa a resposta do servidor
             String rxMgs = new String(
@@ -127,18 +103,20 @@ public class Painel1 extends javax.swing.JPanel {
             rxMgs = rxMgs.substring(0, rxPkt.getLength());
             
             // Imprime a resposta do servidor
-            System.out.println("[Response]: " + rxMgs);
-            
-            // coloca a mensagem de recebimento no painel
-            jTextField3.setText(rxMgs);
-            
-            verificarStatus(rxMgs);
             
         } catch (IOException e) {
-            System.err.println("\n\tMessage error: " + e.getMessage());
-            System.exit(1);
+            e.printStackTrace();
         }
         
+    }
+    
+    public boolean verSeTemToogleAtivo() {
+        if (jPanel4.isVisible() || jPanel5.isVisible() || jPanel3.isVisible() || jPanel6.isVisible() || jPanel8.isVisible() || jPanel9.isVisible() || jPanel2.isVisible() || jPanel11.isVisible() || jPanel10.isVisible()) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
     
     public void atualizarToggle(String msg) {
@@ -169,55 +147,49 @@ public class Painel1 extends javax.swing.JPanel {
             case "luz_guarita":
                 jPanel4.setBackground(corFundo);
                 jLabel9.setText(texto);
+                jPanel4.setVisible(true);
                 break;
             case "ar_guarita":
                 jPanel5.setBackground(corFundo);
                 jLabel11.setText(texto);
+                jPanel5.setVisible(true);
                 break;
             case "luz_estacionamento":
                 jPanel3.setBackground(corFundo);
                 jLabel12.setText(texto);
+                jPanel3.setVisible(true);
                 break;
             case "luz_galpao_externo":
                 jPanel6.setBackground(corFundo);
                 jLabel15.setText(texto);
+                jPanel6.setVisible(true);
                 break;
             case "luz_galpao_interno":
                 jPanel8.setBackground(corFundo);
                 jLabel14.setText(texto);
+                jPanel8.setVisible(true);
                 break;
             case "luz_escritorios":
                 jPanel9.setBackground(corFundo);
                 jLabel13.setText(texto);
+                jPanel9.setVisible(true);
                 break;
             case "ar_escritorios":
                 jPanel2.setBackground(corFundo);
-                jLabel6.setText(texto);
+                jLabel16.setText(texto);
+                jPanel2.setVisible(true);
                 break;
             case "luz_sala_reunioes":
                 jPanel11.setBackground(corFundo);
                 jLabel17.setText(texto);
+                jPanel11.setVisible(true);
                 break;
             case "ar_sala_reunioes":
                 jPanel10.setBackground(corFundo);
                 jLabel18.setText(texto);
+                jPanel10.setVisible(true);
                 break;
         }
-        
-        jPanel7.setVisible(false);
-        jPanel12.setVisible(false);
-        jPanel13.setVisible(false);
-        
-        try {
-            Thread.sleep(1500);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        
-        jPanel7.setVisible(true);
-        jPanel12.setVisible(true);
-        jPanel13.setVisible(true);
     }
     
     public void enviar(String comando, String argumento) {
@@ -229,9 +201,6 @@ public class Painel1 extends javax.swing.JPanel {
         catch (IOException e) {
             e.printStackTrace();
         }
-        
-        // Obtém a mensagem do terminal
-        BufferedReader inputBufferedReader = new BufferedReader(new InputStreamReader(System.in));
         
         try {
             // Cria socket do cliente
@@ -249,9 +218,6 @@ public class Painel1 extends javax.swing.JPanel {
                 // passa para string
                 String txMsg = mensagemJson.toString();
                 
-                // coloca a mensagem de envio no painel
-                jTextField2.setText(txMsg);
-            
             // Converte a mensagem em um array de byte
             txData = txMsg.getBytes(StandardCharsets.UTF_8);
             
@@ -259,7 +225,6 @@ public class Painel1 extends javax.swing.JPanel {
             DatagramPacket txPkt = new DatagramPacket(txData, txMsg.length(), srvIPAddr, Janela.porta);
             
             // Envia a mensagem
-            System.out.println("Enviando a mensagem para o servidor!");
             clientSock.send(txPkt);
             
             // Aguardar a resposta do servidor
@@ -268,10 +233,7 @@ public class Painel1 extends javax.swing.JPanel {
                     rxData, rxData.length);
             
             // Aguarda a resposta do servidor
-            System.out.println("Aguardando a resposta do servidor!");
             clientSock.receive(rxPkt);
-            
-            // parei aqui
             
             // Processa a resposta do servidor
             String rxMgs = new String(
@@ -282,22 +244,24 @@ public class Painel1 extends javax.swing.JPanel {
             atualizarToggle(rxMgs);
             
             // Imprime a resposta do servidor
-            System.out.println("[Response]: " + rxMgs);
-            
-            // coloca a mensagem de recebimento no painel
-            jTextField3.setText(rxMgs);
-            
-            verificarStatus(rxMgs);
             
         } catch (IOException e) {
-            System.err.println("\n\tMessage error: " + e.getMessage());
-            System.exit(1);
+            e.printStackTrace();
         }
         
     }
     
     public Painel1() {
         initComponents();
+        jPanel4.setVisible(false);
+        jPanel5.setVisible(false);
+        jPanel3.setVisible(false);
+        jPanel6.setVisible(false);
+        jPanel8.setVisible(false);
+        jPanel9.setVisible(false);
+        jPanel2.setVisible(false);
+        jPanel11.setVisible(false);
+        jPanel10.setVisible(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -321,28 +285,17 @@ public class Painel1 extends javax.swing.JPanel {
         jRadioButton9 = new javax.swing.JRadioButton();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
-        jTextField2 = new javax.swing.JTextField();
-        jTextField3 = new javax.swing.JTextField();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
-        jLabel7 = new javax.swing.JLabel();
-        jLabel8 = new javax.swing.JLabel();
         jButton3 = new javax.swing.JButton();
         jRadioButton10 = new javax.swing.JRadioButton();
         jRadioButton11 = new javax.swing.JRadioButton();
-        jPanel13 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
         jLabel16 = new javax.swing.JLabel();
-        jPanel7 = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
         jLabel12 = new javax.swing.JLabel();
         jPanel4 = new javax.swing.JPanel();
         jLabel9 = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
         jLabel11 = new javax.swing.JLabel();
-        jPanel12 = new javax.swing.JPanel();
         jPanel6 = new javax.swing.JPanel();
         jLabel15 = new javax.swing.JLabel();
         jPanel8 = new javax.swing.JPanel();
@@ -353,6 +306,7 @@ public class Painel1 extends javax.swing.JPanel {
         jLabel18 = new javax.swing.JLabel();
         jPanel11 = new javax.swing.JPanel();
         jLabel17 = new javax.swing.JLabel();
+        jButton4 = new javax.swing.JButton();
 
         jLabel10.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel10.setForeground(new java.awt.Color(255, 255, 255));
@@ -368,7 +322,7 @@ public class Painel1 extends javax.swing.JPanel {
                 jButton1MouseClicked(evt);
             }
         });
-        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(85, 391, -1, -1));
+        jPanel1.add(jButton1, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 220, -1, -1));
 
         jButton2.setFont(new java.awt.Font("Tahoma", 0, 32)); // NOI18N
         jButton2.setText("SET");
@@ -377,7 +331,7 @@ public class Painel1 extends javax.swing.JPanel {
                 jButton2MouseClicked(evt);
             }
         });
-        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(351, 391, -1, -1));
+        jPanel1.add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(350, 220, -1, -1));
 
         buttonGroup1.add(jRadioButton1);
         jRadioButton1.setText("luz_guarita");
@@ -422,26 +376,6 @@ public class Painel1 extends javax.swing.JPanel {
         jLabel2.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
         jLabel2.setText("Monitoramento de energia");
         jPanel1.add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(21, 12, -1, -1));
-        jPanel1.add(jTextField2, new org.netbeans.lib.awtextra.AbsoluteConstraints(264, 222, 317, 67));
-        jPanel1.add(jTextField3, new org.netbeans.lib.awtextra.AbsoluteConstraints(264, 317, 317, 55));
-
-        jLabel3.setText("Comando Enviado:");
-        jPanel1.add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(288, 200, -1, -1));
-
-        jLabel4.setText("Comando Recebido: ");
-        jPanel1.add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(264, 295, -1, -1));
-
-        jLabel5.setText("Local");
-        jPanel1.add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 222, -1, -1));
-
-        jLabel6.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
-        jPanel1.add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 244, 240, 45));
-
-        jLabel7.setText("Status");
-        jPanel1.add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 295, -1, -1));
-
-        jLabel8.setFont(new java.awt.Font("Tahoma", 1, 28)); // NOI18N
-        jPanel1.add(jLabel8, new org.netbeans.lib.awtextra.AbsoluteConstraints(6, 317, 240, 62));
 
         jButton3.setText("Requesições Automaticas");
         jButton3.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -453,24 +387,11 @@ public class Painel1 extends javax.swing.JPanel {
 
         buttonGroup2.add(jRadioButton10);
         jRadioButton10.setText("OFF");
-        jPanel1.add(jRadioButton10, new org.netbeans.lib.awtextra.AbsoluteConstraints(454, 418, -1, -1));
+        jPanel1.add(jRadioButton10, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 250, -1, -1));
 
         buttonGroup2.add(jRadioButton11);
         jRadioButton11.setText("ON");
-        jPanel1.add(jRadioButton11, new org.netbeans.lib.awtextra.AbsoluteConstraints(454, 391, -1, -1));
-
-        javax.swing.GroupLayout jPanel13Layout = new javax.swing.GroupLayout(jPanel13);
-        jPanel13.setLayout(jPanel13Layout);
-        jPanel13Layout.setHorizontalGroup(
-            jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 50, Short.MAX_VALUE)
-        );
-        jPanel13Layout.setVerticalGroup(
-            jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 120, Short.MAX_VALUE)
-        );
-
-        jPanel1.add(jPanel13, new org.netbeans.lib.awtextra.AbsoluteConstraints(390, 70, 50, 120));
+        jPanel1.add(jRadioButton11, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 220, -1, -1));
 
         jPanel2.setBackground(new java.awt.Color(255, 0, 51));
 
@@ -491,19 +412,6 @@ public class Painel1 extends javax.swing.JPanel {
         );
 
         jPanel1.add(jPanel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 80, 30, 20));
-
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 50, Short.MAX_VALUE)
-        );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 130, Short.MAX_VALUE)
-        );
-
-        jPanel1.add(jPanel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 60, 50, 130));
 
         jPanel3.setBackground(new java.awt.Color(255, 0, 51));
 
@@ -564,19 +472,6 @@ public class Painel1 extends javax.swing.JPanel {
         );
 
         jPanel1.add(jPanel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 120, 30, 20));
-
-        javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
-        jPanel12.setLayout(jPanel12Layout);
-        jPanel12Layout.setHorizontalGroup(
-            jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 50, Short.MAX_VALUE)
-        );
-        jPanel12Layout.setVerticalGroup(
-            jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 120, Short.MAX_VALUE)
-        );
-
-        jPanel1.add(jPanel12, new org.netbeans.lib.awtextra.AbsoluteConstraints(200, 70, 50, 120));
 
         jPanel6.setBackground(new java.awt.Color(255, 0, 51));
 
@@ -678,6 +573,15 @@ public class Painel1 extends javax.swing.JPanel {
 
         jPanel1.add(jPanel11, new org.netbeans.lib.awtextra.AbsoluteConstraints(400, 120, 30, 20));
 
+        jButton4.setFont(new java.awt.Font("Tahoma", 0, 32)); // NOI18N
+        jButton4.setText("GET GERAL");
+        jButton4.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jButton4MouseClicked(evt);
+            }
+        });
+        jPanel1.add(jButton4, new org.netbeans.lib.awtextra.AbsoluteConstraints(130, 220, 200, 50));
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
         this.setLayout(layout);
         layout.setHorizontalGroup(
@@ -691,12 +595,13 @@ public class Painel1 extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 288, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton1MouseClicked
+        // COMANDO GET
         
         if (buttonGroup1.getSelection() == null) {
             JOptionPane.showMessageDialog(null, "Deve ser escolhido um local!", "Erro", JOptionPane.ERROR_MESSAGE);
@@ -779,7 +684,8 @@ public class Painel1 extends javax.swing.JPanel {
     }//GEN-LAST:event_jButton1MouseClicked
 
     private void jButton2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton2MouseClicked
-
+        // COMANDO SET
+        
         // verifica se algum dos botoes (on ou off) foi clicado
         if (buttonGroup2.getSelection() == null) {
             JOptionPane.showMessageDialog(null, "Deve ser selecionado SET ou GET", "Erro", JOptionPane.ERROR_MESSAGE);
@@ -875,7 +781,7 @@ public class Painel1 extends javax.swing.JPanel {
             
         }
         
-        
+        getGeral();
         
     }//GEN-LAST:event_jButton2MouseClicked
 
@@ -889,6 +795,10 @@ public class Painel1 extends javax.swing.JPanel {
         
     }//GEN-LAST:event_jButton3MouseClicked
 
+    private void jButton4MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jButton4MouseClicked
+        getGeral();
+    }//GEN-LAST:event_jButton4MouseClicked
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.ButtonGroup buttonGroup1;
@@ -896,6 +806,7 @@ public class Painel1 extends javax.swing.JPanel {
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
     private javax.swing.JButton jButton3;
+    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -907,24 +818,15 @@ public class Painel1 extends javax.swing.JPanel {
     private javax.swing.JLabel jLabel17;
     private javax.swing.JLabel jLabel18;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
-    private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel10;
     private javax.swing.JPanel jPanel11;
-    private javax.swing.JPanel jPanel12;
-    private javax.swing.JPanel jPanel13;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JRadioButton jRadioButton1;
@@ -938,7 +840,5 @@ public class Painel1 extends javax.swing.JPanel {
     private javax.swing.JRadioButton jRadioButton7;
     private javax.swing.JRadioButton jRadioButton8;
     private javax.swing.JRadioButton jRadioButton9;
-    private javax.swing.JTextField jTextField2;
-    private javax.swing.JTextField jTextField3;
     // End of variables declaration//GEN-END:variables
 }

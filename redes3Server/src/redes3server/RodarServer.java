@@ -6,7 +6,11 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class RodarServer extends Thread {
     
@@ -46,55 +50,69 @@ public class RodarServer extends Thread {
             return false;
         }
         
-        public static void inverterBoolean() {
-            
-        }
-        
         public static void set(String argumento, String status) {
             System.out.println("set status: "+status);
             if (status.equals("on")) {
                 switch (argumento) {
-                case "luz_guarita":
-                    luz_guarita = true;
-                case "ar_guarita":
-                    ar_guarita = true;
-                case "luz_estacionamento":
-                    luz_estacionamento = true;
-                case "luz_galpao_externo":
-                    luz_galpao_externo = true;
-                case "luz_galpao_interno":
-                    luz_galpao_interno = true;
-                case "luz_escritorios":
-                    luz_escritorios = true;
-                case "ar_escritorios":
-                    ar_escritorios = true;
-                case "luz_sala_reunioes":
-                    luz_sala_reunioes = true;
-                case "ar_sala_reunioes":
-                    ar_sala_reunioes = true;
+                    case "luz_guarita":
+                        luz_guarita = true;
+                        break;
+                    case "ar_guarita":
+                        ar_guarita = true;
+                        break;
+                    case "luz_estacionamento":
+                        luz_estacionamento = true;
+                        break;
+                    case "luz_galpao_externo":
+                        luz_galpao_externo = true;
+                        break;
+                    case "luz_galpao_interno":
+                        luz_galpao_interno = true;
+                        break;
+                    case "luz_escritorios":
+                        luz_escritorios = true;
+                        break;
+                    case "ar_escritorios":
+                        ar_escritorios = true;
+                        break;
+                    case "luz_sala_reunioes":
+                        luz_sala_reunioes = true;
+                        break;
+                    case "ar_sala_reunioes":
+                        ar_sala_reunioes = true;
+                        break;
                 }
             }
             
-            if (status.equals("off")) {
+            else if (status.equals("off")) {
                 switch (argumento) {
                 case "luz_guarita":
                     luz_guarita = false;
+                    break;
                 case "ar_guarita":
                     ar_guarita = false;
+                    break;
                 case "luz_estacionamento":
                     luz_estacionamento = false;
+                    break;
                 case "luz_galpao_externo":
                     luz_galpao_externo = false;
+                    break;
                 case "luz_galpao_interno":
                     luz_galpao_interno = false;
+                    break;
                 case "luz_escritorios":
                     luz_escritorios = false;
+                    break;
                 case "ar_escritorios":
                     ar_escritorios = false;
+                    break;
                 case "luz_sala_reunioes":
                     luz_sala_reunioes = false;
+                    break;
                 case "ar_sala_reunioes":
                     ar_sala_reunioes = false;
+                    break;
                 }
             }
             
@@ -106,7 +124,7 @@ public class RodarServer extends Thread {
         resposta.put("status", status);
         
         String response = resposta.toString();
-        System.out.println("responseee: "+response);
+        System.out.println("response: "+response);
         return response;
     }
     
@@ -118,14 +136,14 @@ public class RodarServer extends Thread {
         System.out.print("Starting UDPServer at port " + port +"...");
         
         try {
-            // Criar porta de comunicação UDP
+            // Criar o socket
             DatagramSocket serverSock = new DatagramSocket(port);
             System.out.print(" [OK]");
             
             // Cria os buffers de comunicação
             // 65535 - 20 IP - 8 UDP = 65507
-            byte[] rxData = new byte[65507];
-            byte[] txData = new byte[65507];
+            byte[] rxData = new byte[65507];    // armazena dados recebidos
+            byte[] txData = new byte[65507];    // armazena dados da mensagem de resposta
             
             // Looping de comunicação
             while (true) {
@@ -144,15 +162,17 @@ public class RodarServer extends Thread {
                 // Obtém o payload da mensagem
                 rxData = rxPkt.getData();
                 
+                // converte a mensagem em string
                 String msg = new String(rxData, StandardCharsets.UTF_8);
                 msg = msg.substring(0, rxPkt.getLength());
                 
-                // trata a mensagem: 
+                // monta o json
+                JSONParser parser = new JSONParser();
+                JSONObject mensagemJson = (JSONObject) parser.parse(msg);
                 
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                
-                String comando = msg.substring((msg.indexOf("}") - 4), (msg.indexOf("}") - 1));
-                String argumento = msg.substring((msg.indexOf("e") + 4), (msg.indexOf(",") - 1));
+                // pega os dados do json com as chaves
+                String comando = mensagemJson.get("command").toString();
+                String argumento = mensagemJson.get("locate").toString();
                 String valor;
                 
                 String txtResposta = "vazio";
@@ -164,22 +184,17 @@ public class RodarServer extends Thread {
                             // converte para o formato JSON
                             status = "on";
                             txtResposta = formataJson(argumento, status);
-                            //txtResposta = "sim";
                         }
                         else {
                             // converte para o JSON
                             status = "off";
                             txtResposta = formataJson(argumento, status);
-                            //txtResposta = "nao";   
                         }
                 }
                 else {
                     if (comando.equals("set")) {
                         // pega o valor
-                        valor = msg.substring((msg.indexOf(",") + 10), (msg.indexOf("}") - 17));
-                        System.out.println("valorr: "+valor);
-                        
-                        // converte para o formato JSON
+                        valor = mensagemJson.get("value").toString();
                         
                             if (valor.equals("off")) {
                                 status = "off";
@@ -205,10 +220,6 @@ public class RodarServer extends Thread {
                     }
                 }
                 
-                // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                
-                    System.out.println("txtReposta: "+txtResposta);
-                
                 // Imprime na tela a mensagem recebida
                 System.out.println("Mensagem recebida:");
                 System.out.println("\tIP origem: " + srcIPAddr);
@@ -216,8 +227,7 @@ public class RodarServer extends Thread {
                 System.out.println("\tTamanho mensagem: " +rxPkt.getLength());
                 System.out.println("\tMensagem: " + msg);
                 
-                // Cria mensagem de resposta do servidor
-                //String txMsg = "ACK";
+                // Cria mensagem de resposta do servidor (converte string no arrya de bytes)
                 txData = txtResposta.getBytes(StandardCharsets.UTF_8);
                 
                 // Cria o pacote de resposta do servidor para o cliente
@@ -235,7 +245,9 @@ public class RodarServer extends Thread {
         } catch (IOException ex) {
             System.err.println("\n\tMessage error: " + ex.getMessage());
             System.exit(1);
-        }
+        }   catch (ParseException ex) {
+                Logger.getLogger(RodarServer.class.getName()).log(Level.SEVERE, null, ex);
+            }
         
     }
     
